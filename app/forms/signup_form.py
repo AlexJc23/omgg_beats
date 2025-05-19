@@ -11,17 +11,17 @@ def user_exists(form, field):
     if user:
         raise ValidationError('Email address is already in use.')
 
-
-def username_exists(form, field):
-    # Checking if username is already in use
-    username = field.data
-    user = User.query.filter(User.username == username).first()
+def phone_number_exists(form, field):
+    # Checking if phone number exists
+    phone_number = field.data
+    user = User.query.filter(User.phone_number == phone_number).first()
     if user:
-        raise ValidationError('Username is already in use.')
-
+        raise ValidationError('Phone number is already in use.')
 
 class SignUpForm(FlaskForm):
-    username = StringField(
-        'username', validators=[DataRequired(), username_exists])
+    first_name = StringField('first_name', validators=[DataRequired()])
+    last_name = StringField('last_name', validators=[DataRequired()])
+    phone_number = StringField('phone_number', validators=[DataRequired(), phone_number_exists])
     email = StringField('email', validators=[DataRequired(), user_exists])
+    profile_image = StringField('profile_image')
     password = StringField('password', validators=[DataRequired()])
