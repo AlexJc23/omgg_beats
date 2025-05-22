@@ -20,6 +20,9 @@ class User(db.Model, UserMixin):
     created_at = db.Column(db.DateTime(timezone=True), default=datetime.now, nullable=False)
     updated_at = db.Column(db.DateTime(timezone=True), default=datetime.now, nullable=False)
 
+    appointments = db.relationship("Appointment", back_populates="user", cascade="all, delete-orphan")
+
+
     @property
     def password(self):
         return self.hashed_password
