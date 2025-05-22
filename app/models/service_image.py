@@ -10,7 +10,7 @@ class ServiceImage(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     service_id = db.Column(db.Integer, db.ForeignKey(add_prefix_for_prod('services.id')), nullable=False)
     s3_url = db.Column(db.String(255), nullable=False)
-    image_file = db.Column(db.String(255), nullable=False)
+    image_file = db.Column(db.String(255))
     created_at = db.Column(db.DateTime(timezone=True), default=datetime.now, nullable=False)
     updated_at = db.Column(db.DateTime(timezone=True), default=datetime.now, nullable=False)
 
@@ -25,6 +25,6 @@ class ServiceImage(db.Model):
             'created_at': self.created_at,
             'updated_at': self.updated_at
         }
-    
+
     def __repr__(self):
         return f"<ServiceImage {self.id} {self.service_id} {self.s3_url}>"

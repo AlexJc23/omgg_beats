@@ -15,7 +15,7 @@ class Service(db.Model):
     details = db.Column(db.String(1000), nullable=True)
     created_at = db.Column(db.DateTime(timezone=True), default=datetime.now, nullable=False)
     updated_at = db.Column(db.DateTime(timezone=True), default=datetime.now, nullable=False)
-
+    # Add duration column
 
     def to_dict(self):
         return {
