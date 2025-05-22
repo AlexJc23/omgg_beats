@@ -6,3 +6,4 @@ from .service_image import ServiceImage
 from .appointment import Appointment
 from .revenue_analytic import RevenueAnalytic
 
+

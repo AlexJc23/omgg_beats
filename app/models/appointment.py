@@ -19,6 +19,7 @@ class Appointment(db.Model):
     user = db.relationship("User", back_populates="appointments")
     service = db.relationship("Service", back_populates="appointments")
 
+
     def to_dict(self):
         return {
             'id': self.id,

@@ -15,7 +15,11 @@ class Service(db.Model):
     details = db.Column(db.String(1000), nullable=True)
     created_at = db.Column(db.DateTime(timezone=True), default=datetime.now, nullable=False)
     updated_at = db.Column(db.DateTime(timezone=True), default=datetime.now, nullable=False)
+    # Add duration column
 
+    images = db.relationship("ServiceImage", back_populates="service", cascade="all, delete-orphan")
+    appointments = db.relationship("Appointment", back_populates="service", cascade="all, delete-orphan")
+    revenue_analytics = db.relationship("RevenueAnalytic", back_populates="service", cascade="all, delete-orphan")
 
     def to_dict(self):
         return {

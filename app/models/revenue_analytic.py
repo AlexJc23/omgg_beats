@@ -18,11 +18,13 @@ class RevenueAnalytic(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     service_id = db.Column(db.Integer, db.ForeignKey(add_prefix_for_prod('services.id')), nullable=False)
     revenue = db.Column(db.Float, nullable=False)
+    appointment_count = db.Column(db.Integer, nullable=False, default=0)
     date = db.Column(db.DateTime(timezone=True), default=datetime.now, nullable=False)
     created_at = db.Column(db.DateTime(timezone=True), default=datetime.now, nullable=False)
     updated_at = db.Column(db.DateTime(timezone=True), default=datetime.now, nullable=False)
 
     service = db.relationship("Service", back_populates="revenue_analytics")
+
 
     def to_dict(self):
         return {
@@ -30,6 +32,7 @@ class RevenueAnalytic(db.Model):
             'service_id': self.service_id,
             'revenue': self.revenue,
             'date': self.date,
+            'appointment_count': self.appointment_count,
             'created_at': self.created_at,
             'updated_at': self.updated_at
         }
