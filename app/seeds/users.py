@@ -10,10 +10,14 @@ def seed_users():
         first_name='Jane', last_name='Doe', email='jane@aa.io', password='password', phone_number='0987654321', profile_image='https://omggbeats.s3.us-east-1.amazonaws.com/Images/model2.jpeg')
     demo3 = User(
         first_name='Autumn', last_name='Carl', email="demmon@aa.io", password='password', phone_number='1234567890', profile_image='https://omggbeats.s3.us-east-1.amazonaws.com/Images/model3.webp')
+    dev = User(
+        first_name='Dev', last_name='User', email='dev@aa.io', password='password', phone_number='1234567890', role='admin')
+
 
     db.session.add(demo)
     db.session.add(demo2)
     db.session.add(demo3)
+    db.session.add(dev)
 
     db.session.commit()
 
