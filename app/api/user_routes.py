@@ -1,6 +1,7 @@
-from flask import Blueprint, jsonify
+from flask import Blueprint, jsonify, request
 from flask_login import login_required, current_user
 from app.models import User
+from app import db
 user_routes = Blueprint('users', __name__)
 
 
@@ -31,3 +32,28 @@ def user(id):
     """
     user = User.query.get(id)
     return user.to_dict()
+
+
+@user_routes.route('/<int:id>', methods=['PUT'])
+@login_required
+def update_role(id):
+    """
+    Update the role of a user by id.
+    Only 'owner' or 'admin' can update roles.
+    """
+    if current_user.role not in {"owner", "admin"}:
+        return jsonify({"error": "Unauthorized"}), 403
+
+    user = User.query.get(id)
+    if not user:
+        return jsonify({"error": "User not found"}), 404
+
+    data = request.get_json(silent=True) or {}
+    new_role = data.get('role')
+    print("hellloooo", new_role)
+    if new_role not in {'admin', 'user', 'employee', }:
+        return jsonify({"error": "Invalid role"}), 400
+
+    user.role = new_role
+    db.session.commit()
+    return jsonify({"message": "User role updated successfully", "user": user.to_dict()}), 200

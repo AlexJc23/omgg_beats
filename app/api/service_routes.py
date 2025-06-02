@@ -194,3 +194,7 @@ def edit_service(service_id):
     except Exception as e:
         db.session.rollback()
         return jsonify({"error": "An unexpected error occurred", "details": str(e)}), 500
+
+
+
+# note to self - add routes to seperatly add and delete images 
