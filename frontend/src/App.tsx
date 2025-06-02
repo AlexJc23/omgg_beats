@@ -1,9 +1,10 @@
 import React from 'react';
+import ExampleComponent from './components/ExampleComponent';
 
 const App: React.FC = () => {
   return (
     <div>
-      <h1>Hello World!!!! Yikes!</h1>
+      <ExampleComponent title='Hello There! What is your name though?'/>
     </div>
   );
 };

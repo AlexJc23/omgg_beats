@@ -13,10 +13,11 @@ class User(db.Model, UserMixin):
     id = db.Column(db.Integer, primary_key=True)
     first_name = db.Column(db.String(40), nullable=False)
     last_name = db.Column(db.String(40), nullable=False)
-    profile_image = db.Column(db.String(255), nullable=True)
+    profile_image = db.Column(db.String(255))
     phone_number = db.Column(db.String(20), nullable=True)
     email = db.Column(db.String(255), nullable=False, unique=True)
     hashed_password = db.Column(db.String(255), nullable=False)
+    role = db.Column(db.String(20), nullable=False, default='user')  # Default role is 'user'
     created_at = db.Column(db.DateTime(timezone=True), default=datetime.now, nullable=False)
     updated_at = db.Column(db.DateTime(timezone=True), default=datetime.now, nullable=False)
 
@@ -42,6 +43,7 @@ class User(db.Model, UserMixin):
             'last_name': self.last_name,
             'profile_image': self.profile_image,
             'phone_number': self.phone_number,
+            'role': self.role,
             'created_at': self.created_at,
             'updated_at': self.updated_at
         }
