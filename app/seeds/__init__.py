@@ -2,6 +2,7 @@ from flask.cli import AppGroup
 from .users import seed_users, undo_users
 from .service_images import seed_service_images, undo_service_images
 from .services import seed_services, undo_services
+from .appointments import seed_appointments, undo_appointments
 
 
 from app.models.db import db, environment, SCHEMA
@@ -22,9 +23,11 @@ def seed():
         undo_users()
         undo_service_images()
         undo_services()
+        undo_appointments()
     seed_users()
     seed_service_images()
     seed_services()
+    seed_appointments()
     # Add other seed functions here
 
 
@@ -34,4 +37,5 @@ def undo():
     undo_users()
     undo_service_images()
     undo_services()
+    undo_appointments()
     # Add other undo functions here
