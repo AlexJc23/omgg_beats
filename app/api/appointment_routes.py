@@ -50,7 +50,6 @@ def get_appointments():
             "user_id": appt.user_id,
             "service_id": appt.service_id,
             "appointment_date": appt.appointment_date.isoformat(),
-            "appointment_time": appt.appointment_time.isoformat(),
             "status": appt.status,
             "created_at": appt.created_at.isoformat(),
             "updated_at": appt.updated_at.isoformat(),
@@ -104,3 +103,29 @@ def create_appointment(id):
             return jsonify({"error": "Failed to create appointment", "details": str(e)}), 500
     else:
         return jsonify({"errors": form.errors}), 400
+
+
+@appointment_routes.route('/<int:id>', methods=['PUT'])
+@login_required
+def update_appointment(id):
+    """
+    Update an existing appointment.
+    """
+    appoint_by_id = Appointment.query.get(id)
+    if not appoint_by_id:
+        return jsonify({"error": "Appointment not found"}), 404
+    if appoint_by_id.user_id != current_user.id and current_user.role != 'admin':
+        return jsonify({"error": "Unauthorized to update this appointment"}), 403
+
+    data = request.get_json(silent=True) or {}
+    appointment_status = data.get('status')
+    if appointment_status not in {'pending', 'completed', 'cancelled'}:
+        return jsonify({"error": "Invalid status"}), 400
+
+    try:
+        appoint_by_id.status = appointment_status
+        db.session.commit()
+        return jsonify({"message": "Appointment updated successfully", "appointment": appoint_by_id.to_dict()}), 200
+    except Exception as e:
+        db.session.rollback()
+        return jsonify({"error": "Failed to update appointment", "details": str(e)}), 500

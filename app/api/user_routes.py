@@ -50,7 +50,6 @@ def update_role(id):
 
     data = request.get_json(silent=True) or {}
     new_role = data.get('role')
-    print("hellloooo", new_role)
     if new_role not in {'admin', 'user', 'employee', }:
         return jsonify({"error": "Invalid role"}), 400
 
