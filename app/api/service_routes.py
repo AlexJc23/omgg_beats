@@ -83,7 +83,7 @@ def create_service():
             )
             db.session.add(service_image)
             db.session.commit()
-        return jsonify(service.to_dict()), 201
+        return jsonify(service.to_dict()), 200
     return jsonify(form.errors), 400
 
 
@@ -197,4 +197,4 @@ def edit_service(service_id):
 
 
 
-# note to self - add routes to seperatly add and delete images 
+# note to self - add routes to seperatly add and delete images
