@@ -29,7 +29,6 @@ def get_service(service_id):
 
     return jsonify(service.to_dict()), 200
 
-
 @service_routes.route('/', methods=['POST'])
 @login_required
 def create_service():
@@ -41,50 +40,53 @@ def create_service():
 
     if form.validate_on_submit():
         # Check if a service with the same name already exists
-        existing_service = Service.query.filter_by(name=form.data['name']).first()
+        existing_service = Service.query.filter_by(name=form.name.data).first()
         if existing_service:
             return jsonify({"error": "A service with this name already exists."}), 409
 
         try:
             service = Service(
-                name=form.data['name'],
-                description=form.data['description'],
-                price=form.data['price'],
-                details=form.data['details']
+                name=form.name.data,
+                description=form.description.data,
+                price=form.price.data,
+                details=form.details.data
             )
             db.session.add(service)
-            db.session.commit()
+            db.session.flush()  # So I can use service.id before committing
         except Exception as e:
             db.session.rollback()
             return jsonify({"error": "Failed to create service", "details": str(e)}), 500
 
-        # Handle image uploads from request.files (not form.data)
-        if form.data['image']:
-            image = form.data['image']
-            image.filename = get_unique_filename(image.filename)
-            upload_response = upload_file_tos3(image)
-
-
-            if "url" not in upload_response:
+        # Handle image uploads
+        uploaded_images = form.images.data
+        if uploaded_images:
+            if len(uploaded_images) > 3:
                 db.session.rollback()
-                return jsonify({"error": "Failed to upload image", "details": upload_response.get("errors", "Unknown error")}), 500
+                return jsonify({"error": "You can only upload up to 3 images"}), 400
 
-            service_image = ServiceImage(
-                service_id=service.id,
-                s3_url=upload_response['url']
-            )
+            for image in uploaded_images:
+                if image and image.filename:
+                    image.filename = get_unique_filename(image.filename)
+                    upload_response = upload_file_tos3(image)
 
-            db.session.add(service_image)
-            db.session.commit()
-        else:
-            service_image = ServiceImage(
-                service_id=service.id,
-                s3_url=None
-            )
-            db.session.add(service_image)
-            db.session.commit()
+                    if "url" not in upload_response:
+                        db.session.rollback()
+                        return jsonify({
+                            "error": "Failed to upload image",
+                            "details": upload_response.get("errors", "Unknown error")
+                        }), 500
+
+                    service_image = ServiceImage(
+                        service_id=service.id,
+                        s3_url=upload_response['url']
+                    )
+                    db.session.add(service_image)
+
+        db.session.commit()
         return jsonify(service.to_dict()), 200
+
     return jsonify(form.errors), 400
+
 
 
 @service_routes.route('/<int:service_id>', methods=['DELETE'])
@@ -125,76 +127,78 @@ def edit_service(service_id):
     Edit a service by ID
     """
     try:
-        if current_user.role != 'admin' and current_user.role != 'owner':
+        if current_user.role not in ('admin', 'owner'):
             return jsonify({"error": "Unauthorized"}), 403
 
         if not isinstance(service_id, int) or service_id <= 0:
             return jsonify({"error": "Invalid service ID"}), 400
 
-        service = db.session.query(Service).get(service_id)
+        service = Service.query.get(service_id)
         if not service:
             return jsonify({"error": "Service not found"}), 404
-
 
         form = ServiceForm()
         form['csrf_token'].data = request.cookies.get('csrf_token')
 
         if form.validate_on_submit():
-            # Check if a service with the same name already exists
-            existing_service = Service.query.filter(Service.name == form.data['name'], Service.id != service_id).first()
-
+            # Check if a different service with the same name exists
+            existing_service = Service.query.filter(
+                Service.name == form.name.data,
+                Service.id != service_id
+            ).first()
             if existing_service:
                 return jsonify({"error": "A service with this name already exists."}), 409
 
-            try:
-                service.name = form.data['name']
-                service.description = form.data['description']
-                service.price = form.data['price']
-                service.details = form.data['details']
-                db.session.commit()
-            except Exception as e:
-                db.session.rollback()
-                return jsonify({"error": "Failed to update service", "details": str(e)}), 500
+            # Update basic fields
+            service.name = form.name.data
+            service.description = form.description.data
+            service.price = form.price.data
+            service.details = form.details.data
 
-
-            if form.data.get('image'):
-                image = form.data['image']
-                image.filename = get_unique_filename(image.filename)
-                upload_response = upload_file_tos3(image)
-
-                if "url" not in upload_response:
-                    db.session.rollback()
-                    return jsonify({"error": "Failed to upload image", "details": upload_response.get("errors", "Unknown error")}), 500
-
-                # Remove old images from S3
-                images = ServiceImage.query.filter_by(service_id=service.id).all()
-                for img in images:
-                    img_by_id = ServiceImage.query.get(img.id)
+            uploaded_images = form.images.data  # This is a list of FileStorage objects
+            if uploaded_images:
+                # Remove old images from S3 and database
+                old_images = ServiceImage.query.filter_by(service_id=service.id).all()
+                for img in old_images:
                     if img.s3_url:
                         remove_response = remove_file_from_s3(img.s3_url)
                         if isinstance(remove_response, dict) and "errors" in remove_response:
                             db.session.rollback()
-                            return jsonify({"error": "Failed to delete old image from S3", "details": remove_response["errors"]}), 500
-                    db.session.delete(img_by_id)
-                    db.session.commit()
+                            return jsonify({
+                                "error": "Failed to delete old image from S3",
+                                "details": remove_response["errors"]
+                            }), 500
+                    db.session.delete(img)
 
-                # Add new image
-                new_image = ServiceImage(
-                    service_id=service.id,
-                    s3_url=upload_response['url']
-                )
-                db.session.add(new_image)
-                db.session.commit()
-            else:
-                # If no new image is uploaded, keep the existing images
-                pass
+                # Upload new images and add to DB
+                for image in uploaded_images:
+                    if image and image.filename:
+                        image.filename = get_unique_filename(image.filename)
+                        upload_response = upload_file_tos3(image)
+
+                        if "url" not in upload_response:
+                            db.session.rollback()
+                            return jsonify({
+                                "error": "Failed to upload image",
+                                "details": upload_response.get("errors", "Unknown error")
+                            }), 500
+
+                        new_image = ServiceImage(
+                            service_id=service.id,
+                            s3_url=upload_response['url']
+                        )
+                        db.session.add(new_image)
+
+            db.session.commit()
             return jsonify(service.to_dict()), 200
+
         else:
             return jsonify({"error": "Validation failed", "details": form.errors}), 400
+
     except Exception as e:
         db.session.rollback()
         return jsonify({"error": "An unexpected error occurred", "details": str(e)}), 500
 
 
 
-# note to self - add routes to seperatly add and delete images
+

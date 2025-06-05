@@ -9,6 +9,6 @@ class ServiceForm(FlaskForm):
     description = TextAreaField('description', validators=[DataRequired(), Length(max=1000)])
     price = IntegerField('price', validators=[DataRequired(), NumberRange(min=0)])
     details = TextAreaField('details', validators=[DataRequired(), Length(max=2000)])
-    image = FileField('Image File', validators=[ FileRequired(),
-        FileAllowed(['jpg', 'jpeg', 'png', 'gif'])
+    images = MultipleFileField('Image File', validators=[
+    FileAllowed(['jpg', 'jpeg', 'png', 'gif'])
     ])
